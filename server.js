@@ -255,6 +255,133 @@ app.post('/api/tasks/:type/:id/status', (req, res) => {
     );
 });
 
+// Update task status
+app.put('/api/:type/:id/status', (req, res) => {
+    const { type, id } = req.params;
+    const { status } = req.body;
+    
+    if (!['open', 'in_progress', 'completed'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    let table;
+    switch (type) {
+        case 'important_tasks':
+            table = 'important_tasks';
+            break;
+        case 'todos':
+            table = 'todos';
+            break;
+        default:
+            return res.status(400).json({ error: 'Invalid task type' });
+    }
+
+    const completed_at = status === 'completed' ? moment().format('YYYY-MM-DD HH:mm:ss') : null;
+
+    db.run(`UPDATE ${table} SET status = ?, completed_at = ? WHERE id = ?`, [status, completed_at, id], function(err) {
+        if (err) {
+            console.error('Error updating task status:', err);
+            return res.status(500).json({ error: 'Failed to update task status' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+        res.json({ success: true });
+    });
+});
+
+// Get task by ID
+app.get('/api/:type/:id', (req, res) => {
+    const { type, id } = req.params;
+
+    let table;
+    switch (type) {
+        case 'important_tasks':
+            table = 'important_tasks';
+            break;
+        case 'todos':
+            table = 'todos';
+            break;
+        default:
+            return res.status(400).json({ error: 'Invalid task type' });
+    }
+
+    db.get(`SELECT * FROM ${table} WHERE id = ?`, [id], (err, row) => {
+        if (err) {
+            console.error('Error getting task:', err);
+            return res.status(500).json({ error: 'Failed to get task' });
+        }
+        if (!row) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+        res.json(row);
+    });
+});
+
+// Update task
+app.put('/api/:type/:id', (req, res) => {
+    const { type, id } = req.params;
+    const { title, description, due_time, reminder_time } = req.body;
+
+    let table;
+    let query;
+    let params;
+
+    switch (type) {
+        case 'important_tasks':
+            table = 'important_tasks';
+            query = `UPDATE ${table} SET title = ?, description = ? WHERE id = ?`;
+            params = [title, description || '', id];
+            break;
+        case 'todos':
+            table = 'todos';
+            query = `UPDATE ${table} SET title = ?, description = ?, due_time = ?, reminder_time = ? WHERE id = ?`;
+            params = [title, description || '', due_time || null, reminder_time || null, id];
+            break;
+        default:
+            return res.status(400).json({ error: 'Invalid task type' });
+    }
+
+    db.run(query, params, function(err) {
+        if (err) {
+            console.error('Error updating task:', err);
+            return res.status(500).json({ error: 'Failed to update task' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+        res.json({ success: true });
+    });
+});
+
+// Delete task
+app.delete('/api/:type/:id', (req, res) => {
+    const { type, id } = req.params;
+
+    let table;
+    switch (type) {
+        case 'important_tasks':
+            table = 'important_tasks';
+            break;
+        case 'todos':
+            table = 'todos';
+            break;
+        default:
+            return res.status(400).json({ error: 'Invalid task type' });
+    }
+
+    db.run(`DELETE FROM ${table} WHERE id = ?`, [id], function(err) {
+        if (err) {
+            console.error('Error deleting task:', err);
+            return res.status(500).json({ error: 'Failed to delete task' });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+        res.json({ success: true });
+    });
+});
+
 // Settings route
 app.get('/settings', (req, res) => {
     res.render('settings', { config });
@@ -439,7 +566,29 @@ app.get('/api/reports/filter', (req, res) => {
 
 // Reports HTML route
 app.get('/reports', (req, res) => {
-    const query = `
+    const { status, startDate, endDate } = req.query;
+    
+    let whereClause = '';
+    const params = [];
+    
+    if (status) {
+        whereClause += ' WHERE status = ?';
+        params.push(status);
+    }
+    
+    if (startDate) {
+        whereClause += whereClause ? ' AND' : ' WHERE';
+        whereClause += ' date(created_at) >= ?';
+        params.push(startDate);
+    }
+    
+    if (endDate) {
+        whereClause += whereClause ? ' AND' : ' WHERE';
+        whereClause += ' date(created_at) <= ?';
+        params.push(endDate);
+    }
+
+    const importantQuery = `
         SELECT 
             'important' as type,
             id,
@@ -450,9 +599,12 @@ app.get('/reports', (req, res) => {
             completed_at,
             NULL as due_time,
             NULL as reminder_time,
-            strftime('%Y-%m-%d', created_at) as task_date
+            date(created_at) as task_date
         FROM important_tasks
-        UNION ALL
+        ${whereClause}
+    `;
+
+    const todosQuery = `
         SELECT 
             'todo' as type,
             id,
@@ -463,41 +615,71 @@ app.get('/reports', (req, res) => {
             completed_at,
             due_time,
             reminder_time,
-            strftime('%Y-%m-%d', created_at) as task_date
+            date(created_at) as task_date
         FROM todos
-        ORDER BY created_at DESC
+        ${whereClause}
     `;
     
-    db.all(query, [], (err, tasks) => {
+    // First get important tasks
+    db.all(importantQuery, params, (err, importantTasks) => {
         if (err) {
-            console.error('Database error:', err);
-            return res.status(500).render('reports', { tasks: [] });
+            console.error('Database error (important tasks):', err);
+            return res.status(500).render('reports', { tasks: [], moment });
         }
 
-        // Group tasks by date
-        const tasksByDate = {};
-        tasks.forEach(task => {
-            const date = task.task_date;
-            if (!tasksByDate[date]) {
-                tasksByDate[date] = {
-                    date: date,
-                    important: [],
-                    todos: []
-                };
+        // Then get todos
+        db.all(todosQuery, params, (err, todos) => {
+            if (err) {
+                console.error('Database error (todos):', err);
+                return res.status(500).render('reports', { tasks: [], moment });
             }
-            if (task.type === 'important') {
-                tasksByDate[date].important.push(task);
-            } else {
-                tasksByDate[date].todos.push(task);
-            }
+
+            // Combine and sort all tasks
+            const allTasks = [...importantTasks, ...todos];
+
+            // Group tasks by date
+            const tasksByDate = {};
+            allTasks.forEach(task => {
+                const date = task.task_date;
+                if (!tasksByDate[date]) {
+                    tasksByDate[date] = {
+                        date: moment(date).format('MMMM DD, YYYY'),
+                        important: [],
+                        todos: []
+                    };
+                }
+                if (task.type === 'important') {
+                    tasksByDate[date].important.push(task);
+                } else {
+                    tasksByDate[date].todos.push(task);
+                }
+            });
+
+            // Convert to array and sort by date
+            const report = Object.values(tasksByDate).sort((a, b) => {
+                const dateA = moment(a.date, 'MMMM DD, YYYY');
+                const dateB = moment(b.date, 'MMMM DD, YYYY');
+                return dateB.valueOf() - dateA.valueOf();
+            });
+
+            // Log data for debugging
+            console.log('Report data:', {
+                importantTasksCount: importantTasks.length,
+                todosCount: todos.length,
+                groupedDatesCount: report.length,
+                report: report
+            });
+
+            res.render('reports', { 
+                tasks: report, 
+                moment,
+                filters: {
+                    status,
+                    startDate,
+                    endDate
+                }
+            });
         });
-
-        // Convert to array and sort by date
-        const report = Object.values(tasksByDate).sort((a, b) => 
-            moment(b.date).valueOf() - moment(a.date).valueOf()
-        );
-
-        res.render('reports', { tasks: report });
     });
 });
 

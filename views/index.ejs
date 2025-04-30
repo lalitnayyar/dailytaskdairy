@@ -85,6 +85,46 @@
         .task-border {
             border-left: 4px solid;
         }
+        .task-card {
+            background-color: #f7f7f7;
+            padding: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .task-card.important {
+            border-left: 4px solid #3498db;
+        }
+        .task-card.todo {
+            border-left: 4px solid #2ecc71;
+        }
+        .task-title {
+            font-weight: 500;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .task-description {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .task-meta {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .task-time {
+            margin-bottom: 0.5rem;
+        }
+        .task-status {
+            margin-bottom: 1rem;
+        }
+        .status-open {
+            color: #007bff;
+        }
+        .status-in_progress {
+            color: #ffc107;
+        }
+        .status-closed {
+            color: #28a745;
+        }
     </style>
 </head>
 <body>
@@ -196,113 +236,83 @@
 
             <!-- Important Tasks -->
             <div class="col-md-4">
-                <div class="card h-100">
+                <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Important Tasks</h5>
-                        <button class="btn btn-primary btn-sm" onclick="showAddImportantTask()">
-                            <i class="bi bi-plus-lg"></i> Add Task
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addImportantTaskModal">
+                            + Add Task
                         </button>
                     </div>
                     <div class="card-body important-tasks-container">
-                        <% if (importantTasks && importantTasks.length > 0) { %>
-                            <% importantTasks.forEach(function(task) { %>
-                                <div class="task-card mb-3" data-task-id="<%= task.id %>">
-                                    <div class="task-content p-3 important-task">
-                                        <div class="task-border" style="border-left-color: <%= task.color || '#3498db' %>">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <h6 class="task-title mb-1"><%= task.title %></h6>
-                                                    <p class="task-description mb-2"><%= task.description %></p>
-                                                    <small class="text-muted">Created: <%= moment(task.created_at).format('MMM D, YYYY h:mm A') %></small>
-                                                </div>
-                                                <div class="task-actions">
-                                                    <div class="btn-group btn-group-sm">
-                                                        <button class="btn btn-outline-secondary" onclick="editImportantTask('<%= task.id %>')">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                        <button class="btn btn-outline-danger" onclick="deleteImportantTask('<%= task.id %>')">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <div class="btn-group btn-group-sm status-buttons">
-                                                    <button class="btn <%= task.status === 'open' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                                        onclick="updateTaskStatus('<%= task.id %>', 'open', 'important_tasks')">Open</button>
-                                                    <button class="btn <%= task.status === 'in_progress' ? 'btn-warning' : 'btn-outline-warning' %>"
-                                                        onclick="updateTaskStatus('<%= task.id %>', 'in_progress', 'important_tasks')">In Progress</button>
-                                                    <button class="btn <%= task.status === 'closed' ? 'btn-success' : 'btn-outline-success' %>"
-                                                        onclick="updateTaskStatus('<%= task.id %>', 'closed', 'important_tasks')">Done</button>
-                                                </div>
-                                            </div>
-                                        </div>
+                        <% importantTasks.forEach(function(task) { %>
+                            <div class="task-card important" data-id="<%= task.id %>">
+                                <div class="task-title"><%= task.title %></div>
+                                <div class="task-description"><%= task.description %></div>
+                                <div class="task-meta">
+                                    <div class="task-time">Created: <%= moment(task.created_at).format('MMM DD, YYYY h:mm A') %></div>
+                                    <div class="task-status status-<%= task.status.toLowerCase() %>">
+                                        <%= task.status %>
                                     </div>
                                 </div>
-                            <% }); %>
-                        <% } else { %>
-                            <p class="text-muted">No important tasks found.</p>
-                        <% } %>
+                                <div class="task-actions mt-3">
+                                    <div class="btn-group btn-group-sm mb-2 w-100">
+                                        <button class="btn <%= task.status === 'open' ? 'btn-primary' : 'btn-outline-primary' %> update-status" 
+                                            data-type="important" data-id="<%= task.id %>" data-status="open">Open</button>
+                                        <button class="btn <%= task.status === 'in_progress' ? 'btn-warning' : 'btn-outline-warning' %> update-status" 
+                                            data-type="important" data-id="<%= task.id %>" data-status="in_progress">In Progress</button>
+                                        <button class="btn <%= task.status === 'completed' ? 'btn-success' : 'btn-outline-success' %> update-status" 
+                                            data-type="important" data-id="<%= task.id %>" data-status="completed">Done</button>
+                                    </div>
+                                    <div class="btn-group btn-group-sm w-100">
+                                        <button class="btn btn-outline-secondary edit-task" data-type="important" data-id="<%= task.id %>">Edit</button>
+                                        <button class="btn btn-outline-danger delete-task" data-type="important" data-id="<%= task.id %>">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
                     </div>
                 </div>
             </div>
 
             <!-- Todo List -->
             <div class="col-md-4">
-                <div class="card h-100">
+                <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Todo List</h5>
-                        <button class="btn btn-primary btn-sm" onclick="showAddTodo()">
-                            <i class="bi bi-plus-lg"></i> Add Todo
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTodoModal">
+                            + Add Todo
                         </button>
                     </div>
                     <div class="card-body todo-container">
-                        <% if (todos && todos.length > 0) { %>
-                            <% todos.forEach(function(todo) { %>
-                                <div class="task-card mb-3" data-task-id="<%= todo.id %>">
-                                    <div class="task-content p-3 todo">
-                                        <div class="task-border" style="border-left-color: <%= todo.color || '#2ecc71' %>">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <h6 class="task-title mb-1"><%= todo.title %></h6>
-                                                    <p class="task-description mb-2"><%= todo.description %></p>
-                                                    <% if (todo.due_time) { %>
-                                                        <small class="text-muted me-3">Due: <%= todo.due_time %></small>
-                                                    <% } %>
-                                                    <% if (todo.reminder_time) { %>
-                                                        <small class="text-muted">Reminder: <%= todo.reminder_time %></small>
-                                                    <% } %>
-                                                    <br>
-                                                    <small class="text-muted">Created: <%= moment(todo.created_at).format('MMM D, YYYY h:mm A') %></small>
-                                                </div>
-                                                <div class="task-actions">
-                                                    <div class="btn-group btn-group-sm">
-                                                        <button class="btn btn-outline-secondary" onclick="editTodo('<%= todo.id %>')">
-                                                            <i class="bi bi-pencil"></i>
-                                                        </button>
-                                                        <button class="btn btn-outline-danger" onclick="deleteTodo('<%= todo.id %>')">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <div class="btn-group btn-group-sm status-buttons">
-                                                    <button class="btn <%= todo.status === 'open' ? 'btn-primary' : 'btn-outline-primary' %>"
-                                                        onclick="updateTaskStatus('<%= todo.id %>', 'open', 'todos')">Open</button>
-                                                    <button class="btn <%= todo.status === 'in_progress' ? 'btn-warning' : 'btn-outline-warning' %>"
-                                                        onclick="updateTaskStatus('<%= todo.id %>', 'in_progress', 'todos')">In Progress</button>
-                                                    <button class="btn <%= todo.status === 'closed' ? 'btn-success' : 'btn-outline-success' %>"
-                                                        onclick="updateTaskStatus('<%= todo.id %>', 'closed', 'todos')">Done</button>
-                                                </div>
-                                            </div>
-                                        </div>
+                        <% todos.forEach(function(todo) { %>
+                            <div class="task-card todo" data-id="<%= todo.id %>">
+                                <div class="task-title"><%= todo.title %></div>
+                                <div class="task-description"><%= todo.description %></div>
+                                <div class="task-meta">
+                                    <div class="task-time">Created: <%= moment(todo.created_at).format('MMM DD, YYYY h:mm A') %></div>
+                                    <% if (todo.due_time) { %>
+                                        <div class="task-time">Due: <%= todo.due_time %></div>
+                                    <% } %>
+                                    <div class="task-status status-<%= todo.status.toLowerCase() %>">
+                                        <%= todo.status %>
                                     </div>
                                 </div>
-                            <% }); %>
-                        <% } else { %>
-                            <p class="text-muted">No todos found.</p>
-                        <% } %>
+                                <div class="task-actions mt-3">
+                                    <div class="btn-group btn-group-sm mb-2 w-100">
+                                        <button class="btn <%= todo.status === 'open' ? 'btn-primary' : 'btn-outline-primary' %> update-status" 
+                                            data-type="todo" data-id="<%= todo.id %>" data-status="open">Open</button>
+                                        <button class="btn <%= todo.status === 'in_progress' ? 'btn-warning' : 'btn-outline-warning' %> update-status" 
+                                            data-type="todo" data-id="<%= todo.id %>" data-status="in_progress">In Progress</button>
+                                        <button class="btn <%= todo.status === 'completed' ? 'btn-success' : 'btn-outline-success' %> update-status" 
+                                            data-type="todo" data-id="<%= todo.id %>" data-status="completed">Done</button>
+                                    </div>
+                                    <div class="btn-group btn-group-sm w-100">
+                                        <button class="btn btn-outline-secondary edit-task" data-type="todo" data-id="<%= todo.id %>">Edit</button>
+                                        <button class="btn btn-outline-danger delete-task" data-type="todo" data-id="<%= todo.id %>">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
                     </div>
                 </div>
             </div>

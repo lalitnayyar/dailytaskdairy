@@ -559,7 +559,162 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.task-card').forEach(card => {
         card.classList.add('new');
     });
+
+    // Status Update Functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('update-status')) {
+            const button = e.target;
+            const taskId = button.dataset.id;
+            const taskType = button.dataset.type;
+            const newStatus = button.dataset.status;
+            
+            updateTaskStatus(taskId, newStatus, taskType);
+        }
+    });
+
+    // Edit Task Functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('edit-task')) {
+            const button = e.target;
+            const taskId = button.dataset.id;
+            const taskType = button.dataset.type;
+            
+            editTask(taskId, taskType);
+        }
+    });
+
+    // Delete Task Functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-task')) {
+            const button = e.target;
+            const taskId = button.dataset.id;
+            const taskType = button.dataset.type;
+            
+            deleteTask(taskId, taskType);
+        }
+    });
 });
+
+// Update Task Status
+function updateTaskStatus(taskId, newStatus, taskType) {
+    const endpoint = taskType === 'important' ? 'important_tasks' : 'todos';
+    
+    fetch(`/api/${endpoint}/${taskId}/status`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update status');
+        }
+        return response.json();
+    })
+    .then(() => {
+        // Refresh the page to show updated status
+        window.location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error updating task status', 'danger');
+    });
+}
+
+// Edit Task
+function editTask(taskId, taskType) {
+    const endpoint = taskType === 'important' ? 'important_tasks' : 'todos';
+    
+    // First, get the task details
+    fetch(`/api/${endpoint}/${taskId}`)
+        .then(response => response.json())
+        .then(task => {
+            // Populate the edit modal based on task type
+            if (taskType === 'important') {
+                document.getElementById('editImportantTaskId').value = task.id;
+                document.getElementById('editImportantTaskTitle').value = task.title;
+                document.getElementById('editImportantTaskDescription').value = task.description || '';
+                
+                // Show the edit modal
+                const editModal = new bootstrap.Modal(document.getElementById('editImportantTaskModal'));
+                editModal.show();
+            } else {
+                document.getElementById('editTodoId').value = task.id;
+                document.getElementById('editTodoTitle').value = task.title;
+                document.getElementById('editTodoDescription').value = task.description || '';
+                document.getElementById('editTodoDueTime').value = task.due_time || '';
+                document.getElementById('editTodoReminderTime').value = task.reminder_time || '';
+                
+                // Show the edit modal
+                const editModal = new bootstrap.Modal(document.getElementById('editTodoModal'));
+                editModal.show();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading task details', 'danger');
+        });
+}
+
+// Delete Task
+function deleteTask(taskId, taskType) {
+    if (!confirm('Are you sure you want to delete this task?')) {
+        return;
+    }
+
+    const endpoint = taskType === 'important' ? 'important_tasks' : 'todos';
+    
+    fetch(`/api/${endpoint}/${taskId}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to delete task');
+        }
+        return response.json();
+    })
+    .then(() => {
+        // Remove the task card from the DOM
+        const taskCard = document.querySelector(`[data-id="${taskId}"]`);
+        if (taskCard) {
+            taskCard.remove();
+        }
+        showToast('Task deleted successfully', 'success');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error deleting task', 'danger');
+    });
+}
+
+// Show Toast Notification
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    // Remove the toast after it's hidden
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
+}
 
 // Color utilities
 const colorPalette = [

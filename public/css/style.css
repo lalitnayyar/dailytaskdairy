@@ -114,40 +114,170 @@
 }
 
 .task-card {
-    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    cursor: pointer;
 }
 
 .task-card:hover {
     transform: translateY(-2px);
 }
 
-.task-content {
-    background: #fff;
-    transition: all 0.3s ease;
-    border-radius: 8px !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.task-card.important {
+    border-left: 4px solid #3498db;
+    background-color: #f8f9fa;
 }
 
-.task-content:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+.task-card.todo {
+    border-left: 4px solid #2ecc71;
+    background-color: #f8f9fa;
 }
 
-.task-title {
-    font-weight: 600;
-    color: #2c3e50;
+.task-card .task-title {
+    font-weight: bold;
+    margin-bottom: 5px;
 }
 
-.task-description {
-    font-size: 0.9rem;
+.task-card .task-description {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.task-card .task-meta {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 10px;
+}
+
+.task-card .task-actions {
+    margin-top: 10px;
+}
+
+.task-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.status-open {
+    background-color: #f8f9fa;
     color: #666;
 }
 
-.status-buttons {
-    font-size: 0.8rem;
+.status-in-progress {
+    background-color: #f8f9fa;
+    color: #666;
 }
 
-.status-buttons .btn {
-    padding: 0.25rem 0.5rem;
+.status-completed {
+    background-color: #f8f9fa;
+    color: #666;
+}
+
+.task-time {
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* Toast container styles */
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+
+.toast {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    margin-bottom: 10px;
+}
+
+.toast-header {
+    border-bottom: 1px solid #eee;
+    padding: 8px 12px;
+}
+
+.toast-body {
+    padding: 12px;
+}
+
+/* Modal styles */
+.modal-content {
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    border-top: 1px solid #eee;
+    padding: 15px 20px;
+}
+
+/* Form styles */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+}
+
+.form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Button styles */
+.btn {
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.btn-success {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+/* Time display styles */
+.current-time {
+    font-size: 1.2em;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.time-icon {
+    margin-right: 8px;
+    font-size: 1.1em;
 }
 
 .important-tasks-container, .todo-container {
