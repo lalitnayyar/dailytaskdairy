@@ -49,12 +49,16 @@
 .card {
     height: calc(100vh - 140px);
     overflow-y: auto;
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.05);
 }
 
 .card-header {
     position: sticky;
     top: 0;
     z-index: 1;
+    background: white;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
 .task-status {
@@ -107,4 +111,138 @@
 
 .form-check {
     margin-top: 10px;
+}
+
+.task-card {
+    transition: all 0.3s ease;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+}
+
+.task-content {
+    background: #fff;
+    transition: all 0.3s ease;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.task-content:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.task-title {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.task-description {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.status-buttons {
+    font-size: 0.8rem;
+}
+
+.status-buttons .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.important-tasks-container, .todo-container {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.important-tasks-container::-webkit-scrollbar,
+.todo-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.important-tasks-container::-webkit-scrollbar-track,
+.todo-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.important-tasks-container::-webkit-scrollbar-thumb,
+.todo-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.important-tasks-container::-webkit-scrollbar-thumb:hover,
+.todo-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.task-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.btn-group-sm > .btn {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
+}
+
+.text-muted {
+    font-size: 0.8rem;
+}
+
+/* Status colors */
+.status-open {
+    color: #3498db;
+}
+
+.status-in-progress {
+    color: #f1c40f;
+}
+
+.status-closed {
+    color: #2ecc71;
+}
+
+/* Task priority indicators */
+.task-priority-high {
+    border-left-color: #e74c3c !important;
+}
+
+.task-priority-medium {
+    border-left-color: #f39c12 !important;
+}
+
+.task-priority-low {
+    border-left-color: #3498db !important;
+}
+
+/* Smooth transitions */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Card animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.task-card.new {
+    animation: slideIn 0.3s ease-out;
 }
