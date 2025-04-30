@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Daily Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Daily Planner</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">Reports</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/settings">Settings</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="settingsForm">
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="resetDataOnStart" 
+                                           <%= config.resetDataOnStart ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="resetDataOnStart">
+                                        Reset data on application start
+                                    </label>
+                                </div>
+                                <small class="text-muted">
+                                    If enabled, all data will be cleared and sample data will be added each time the application starts.
+                                    If disabled, existing data will be preserved.
+                                </small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                                <button type="button" class="btn btn-warning ms-2" id="resetNowBtn">Reset Data Now</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resetDataOnStart = document.getElementById('resetDataOnStart').checked;
+            
+            try {
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ resetDataOnStart })
+                });
+                
+                if (response.ok) {
+                    alert('Settings saved successfully!');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error saving settings: ' + error.message);
+            }
+        });
+
+        document.getElementById('resetNowBtn').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+                try {
+                    const response = await fetch('/api/settings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ resetDataOnStart: true })
+                    });
+                    
+                    if (response.ok) {
+                        alert('Data reset successfully!');
+                        location.href = '/';
+                    } else {
+                        throw new Error('Failed to reset data');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error resetting data: ' + error.message);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

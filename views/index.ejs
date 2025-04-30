@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Task Planner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Daily Task Planner</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reports">Reports</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/settings">Settings</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="top-panel">
+        <div class="container-fluid bg-dark text-white py-2">
+            <div class="row align-items-center">
+                <div class="col text-center">
+                    <h3 id="current-time"></h3>
+                    <h5 id="current-date"></h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <% if (typeof error !== 'undefined') { %>
+            <div class="alert alert-danger" role="alert">
+                <%= error %>
+            </div>
+        <% } %>
+        <div class="row">
+            <!-- Hourly Schedule -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Daily Schedule</h5>
+                        <div class="btn-group">
+                            <a href="/?date=<%- moment(targetDate).subtract(1, 'days').format('YYYY-MM-DD') %>" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-chevron-left"></i> Previous
+                            </a>
+                            <a href="/" class="btn btn-outline-primary btn-sm <%- targetDate === currentDate ? 'active' : '' %>">
+                                Today
+                            </a>
+                            <a href="/?date=<%- moment(targetDate).add(1, 'days').format('YYYY-MM-DD') %>" 
+                               class="btn btn-outline-primary btn-sm">
+                                Next <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <h6 class="mb-0"><%- moment(targetDate).format('dddd, MMMM D, YYYY') %></h6>
+                            <% if (targetDate !== currentDate) { %>
+                                <small class="text-muted">
+                                    <%- moment(targetDate).isBefore(currentDate) ? 'Past' : 'Future' %> Schedule
+                                </small>
+                            <% } %>
+                        </div>
+                        <div class="schedule">
+                            <% for(let hour = 5; hour < 24; hour++) { %>
+                                <div class="hour-slot">
+                                    <div class="time"><%- hour.toString().padStart(2, '0') %>:00</div>
+                                    <div class="task">
+                                        <% const task = tasks.find(t => t.hour === hour) %>
+                                        <% if (task) { %>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div><%- task.description %></div>
+                                                <div>
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            onclick="editScheduleTask(<%- task.id %>, <%- hour %>, '<%- task.description.replace(/'/g, "\\'") %>')">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deleteScheduleTask(<%- task.id %>)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        <% } else { %>
+                                            <button class="btn btn-sm btn-outline-secondary" 
+                                                    onclick="addScheduleTask(<%- hour %>)">
+                                                <i class="bi bi-plus"></i> Add Task
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Tasks -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">Important Tasks</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="important-tasks">
+                            <% importantTasks.forEach(task => { %>
+                                <div class="task-tile" data-task-id="<%= task.id %>">
+                                    <div class="d-flex justify-content-between">
+                                        <h6><%= task.title %></h6>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editImportantTask(<%= task.id %>)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteImportantTask(<%= task.id %>)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p><%= task.description %></p>
+                                    <div class="task-status">
+                                        <div class="btn-group" role="group">
+                                            <input type="radio" class="btn-check" name="status-<%= task.id %>" 
+                                                   id="open-<%= task.id %>" value="open"
+                                                   <%= task.status === 'open' ? 'checked' : '' %>
+                                                   onchange="updateTaskStatus('important', <%= task.id %>, 'open')">
+                                            <label class="btn btn-outline-warning btn-sm" for="open-<%= task.id %>">Open</label>
+
+                                            <input type="radio" class="btn-check" name="status-<%= task.id %>" 
+                                                   id="progress-<%= task.id %>" value="in_progress"
+                                                   <%= task.status === 'in_progress' ? 'checked' : '' %>
+                                                   onchange="updateTaskStatus('important', <%= task.id %>, 'in_progress')">
+                                            <label class="btn btn-outline-primary btn-sm" for="progress-<%= task.id %>">In Progress</label>
+
+                                            <input type="radio" class="btn-check" name="status-<%= task.id %>" 
+                                                   id="closed-<%= task.id %>" value="closed"
+                                                   <%= task.status === 'closed' ? 'checked' : '' %>
+                                                   onchange="updateTaskStatus('important', <%= task.id %>, 'closed')">
+                                            <label class="btn btn-outline-success btn-sm" for="closed-<%= task.id %>">Completed</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                        <button class="btn btn-outline-danger mt-3" onclick="showAddImportantTask()">
+                            Add Important Task
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Todo List -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Todo List</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="todo-list">
+                            <% todos.forEach(todo => { %>
+                                <div class="todo-tile" data-task-id="<%= todo.id %>">
+                                    <div class="d-flex justify-content-between">
+                                        <h6><%= todo.title %></h6>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editTodo(<%= todo.id %>)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTodo(<%= todo.id %>)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p><%= todo.description %></p>
+                                    <small>Due: <%= todo.due_time %></small>
+                                    <div class="task-status mt-2">
+                                        <div class="btn-group" role="group">
+                                            <input type="radio" class="btn-check" name="status-todo-<%= todo.id %>" 
+                                                   id="todo-open-<%= todo.id %>" value="open"
+                                                   <%= todo.status === 'open' ? 'checked' : '' %>
+                                                   onchange="updateTaskStatus('todo', <%= todo.id %>, 'open')">
+                                            <label class="btn btn-outline-warning btn-sm" for="todo-open-<%= todo.id %>">Open</label>
+
+                                            <input type="radio" class="btn-check" name="status-todo-<%= todo.id %>" 
+                                                   id="todo-progress-<%= todo.id %>" value="in_progress"
+                                                   <%= todo.status === 'in_progress' ? 'checked' : '' %>
+                                                   onchange="updateTaskStatus('todo', <%= todo.id %>, 'in_progress')">
+                                            <label class="btn btn-outline-primary btn-sm" for="todo-progress-<%= todo.id %>">In Progress</label>
+
+                                            <input type="radio" class="btn-check" name="status-todo-<%= todo.id %>" 
+                                                   id="todo-closed-<%= todo.id %>" value="closed"
+                                                   <%= todo.status === 'closed' ? 'checked' : '' %>
+                                                   onchange="updateTaskStatus('todo', <%= todo.id %>, 'closed')">
+                                            <label class="btn btn-outline-success btn-sm" for="todo-closed-<%= todo.id %>">Completed</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                        <button class="btn btn-outline-success mt-3" onclick="showAddTodo()">
+                            Add Todo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" id="taskTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="taskDescription" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Due Time</label>
+                            <input type="time" class="form-control" id="taskDueTime">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTask()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Modal -->
+    <div class="modal fade" id="reminderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reminder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="reminderText"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Acknowledge</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

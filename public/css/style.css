@@ -1,0 +1,110 @@
+.top-panel {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hour-slot {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+}
+
+.time {
+    width: 60px;
+    font-weight: bold;
+    color: #666;
+}
+
+.task {
+    flex-grow: 1;
+    padding-left: 10px;
+}
+
+.task-tile {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.todo-tile {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.todo-tile small {
+    color: #6c757d;
+    display: block;
+    margin: 5px 0;
+}
+
+.card {
+    height: calc(100vh - 140px);
+    overflow-y: auto;
+}
+
+.card-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.task-status {
+    margin-top: 10px;
+}
+
+.task-status .btn-group {
+    width: 100%;
+}
+
+.task-status .btn {
+    flex: 1;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+/* Report page styles */
+.table-responsive {
+    margin-top: 20px;
+}
+
+.badge {
+    font-size: 0.9em;
+    padding: 0.5em 0.7em;
+}
+
+#searchForm .form-label {
+    font-weight: 500;
+}
+
+.search-card {
+    background: #f8f9fa;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.form-check {
+    margin-top: 10px;
+}
